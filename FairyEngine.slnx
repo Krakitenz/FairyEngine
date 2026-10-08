@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="FairyEngine/FairyEngine.vcxproj" Id="1355269a-4e14-4556-bf81-b0eeb019b3b1" />
+</Solution>

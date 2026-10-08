@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source\Headers">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source\Core">
+      <UniqueIdentifier>{36fbce9b-0d4d-43b4-b0d6-2713686b6427}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Shaders">
+      <UniqueIdentifier>{35d58bfb-26ef-4fb3-adfe-1d37971577a3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="external\glad\src\gl.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Shader.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Window.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Texture.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Sprite.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Animation.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Player.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Framebuffer.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Camera.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\core\Shader.h">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Window.h">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Texture.h">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Sprite.h">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Animation.h">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Player.h">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Layer.h">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Framebuffer.h">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Camera.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\shaders\post.frag">
+      <Filter>Assets\Shaders</Filter>
+    </None>
+    <None Include="assets\shaders\post.vert">
+      <Filter>Assets\Shaders</Filter>
+    </None>
+    <None Include="assets\shaders\scene.vert" />
+    <None Include="assets\shaders\scene.frag" />
+  </ItemGroup>
+  <ItemGroup><Filter Include="Source\World"><UniqueIdentifier>{22222222-2222-4222-8222-222222222222}</UniqueIdentifier></Filter><Filter Include="Source\UI"><UniqueIdentifier>{33333333-3333-4333-8333-333333333333}</UniqueIdentifier></Filter><Filter Include="Source\Game\UI"><UniqueIdentifier>{44444444-4444-4444-8444-444444444444}</UniqueIdentifier></Filter><Filter Include="Source\Config"><UniqueIdentifier>{55555555-5555-4555-8555-555555555555}</UniqueIdentifier></Filter><Filter Include="External\STB"><UniqueIdentifier>{66666666-6666-4666-8666-666666666666}</UniqueIdentifier></Filter><Filter Include="Assets\Locations"><UniqueIdentifier>{77777777-7777-4777-8777-777777777777}</UniqueIdentifier></Filter><Filter Include="Assets\Fonts"><UniqueIdentifier>{88888888-8888-4888-8888-888888888888}</UniqueIdentifier></Filter><Filter Include="Tools"><UniqueIdentifier>{99999999-9999-4999-8999-999999999999}</UniqueIdentifier></Filter></ItemGroup>  <ItemGroup><ClCompile Include="external\stb\stb_truetype.cpp"><Filter>External\STB</Filter></ClCompile><ClCompile Include="src\world\Door.cpp"><Filter>Source\World</Filter></ClCompile><ClCompile Include="src\world\LevelManager.cpp"><Filter>Source\World</Filter></ClCompile><ClCompile Include="src\world\WorldManager.cpp"><Filter>Source\World</Filter></ClCompile><ClCompile Include="src\ui\Font.cpp"><Filter>Source\UI</Filter></ClCompile><ClCompile Include="src\ui\TextRenderer.cpp"><Filter>Source\UI</Filter></ClCompile><ClCompile Include="src\ui\UIQuadRenderer.cpp"><Filter>Source\UI</Filter></ClCompile><ClCompile Include="src\ui\Button.cpp"><Filter>Source\UI</Filter></ClCompile><ClCompile Include="src\game\ui\MainMenu.cpp"><Filter>Source\Game\UI</Filter></ClCompile><ClInclude Include="src\world\Door.h"><Filter>Source\World</Filter></ClInclude><ClInclude Include="src\world\LevelManager.h"><Filter>Source\World</Filter></ClInclude><ClInclude Include="src\world\Location.h"><Filter>Source\World</Filter></ClInclude><ClInclude Include="src\world\WorldManager.h"><Filter>Source\World</Filter></ClInclude><ClInclude Include="src\ui\Font.h"><Filter>Source\UI</Filter></ClInclude><ClInclude Include="src\ui\TextRenderer.h"><Filter>Source\UI</Filter></ClInclude><ClInclude Include="src\ui\UIQuadRenderer.h"><Filter>Source\UI</Filter></ClInclude><ClInclude Include="src\ui\Button.h"><Filter>Source\UI</Filter></ClInclude><ClInclude Include="src\game\ui\MainMenu.h"><Filter>Source\Game\UI</Filter></ClInclude><ClInclude Include="src\config\GameConfig.h"><Filter>Source\Config</Filter></ClInclude></ItemGroup>  <ItemGroup><None Include="assets\locations\intro.location"><Filter>Assets\Locations</Filter></None><None Include="assets\locations\test2.location"><Filter>Assets\Locations</Filter></None><None Include="assets\PoetryVelvetRegularDemo-pgzzv.ttf"><Filter>Assets\Fonts</Filter></None><None Include="assets\PoetryVelvetItalicDemo-DY99x.ttf"><Filter>Assets\Fonts</Filter></None><None Include="tools\TestLocationTransition.ps1"><Filter>Tools</Filter></None></ItemGroup></Project>
+

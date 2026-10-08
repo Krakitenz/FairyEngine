@@ -1,0 +1,20 @@
+# Second test location
+id = test2
+
+background.texture = assets/Test2.png
+background.parallax = 0.0
+background.opacity = 1.0
+
+fog.prefix = fog
+fog.firstFrame = 1
+fog.frameCount = 114
+fog.digits = 5
+fog.frameRate = 30.0
+fog.opacity = 0.35
+
+player.startX = 180.0
+player.startY = 120.0
+
+transition.nextLocation =
+transition.trigger = 0.9
+transition.duration = 0.8

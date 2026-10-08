@@ -1,0 +1,41 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build output
+[Bb]in/
+[Oo]bj/
+Debug/
+Release/
+x64/
+x86/
+
+# Native C/C++ build artifacts
+*.obj
+*.o
+*.iobj
+*.pdb
+*.ipdb
+*.tlog
+*.ilk
+*.log
+*.exp
+*.lib
+*.dll
+*.exe
+*.lastbuildstate
+
+# CMake and generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak

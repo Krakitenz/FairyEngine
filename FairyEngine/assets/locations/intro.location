@@ -1,0 +1,26 @@
+# Fairy Engine location
+id = intro
+
+background.texture = assets/1.png
+background.parallax = 0.25
+background.opacity = 1.0
+foreground.texture = assets/2.png
+foreground.parallax = 1.0
+foreground.opacity = 1.0
+
+fog.prefix = fog
+fog.firstFrame = 1
+fog.frameCount = 114
+fog.digits = 5
+fog.frameRate = 30.0
+fog.opacity = 0.35
+
+player.startX = 900.0
+player.startY = 120.0
+
+transition.nextLocation = test2
+transition.duration = 0.8
+
+door.width = 180.0
+door.height = 260.0
+door.interactionDistance = 180.0
