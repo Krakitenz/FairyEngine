@@ -23,18 +23,26 @@ namespace fairy::ui {
 	void Button::draw(UIQuadRenderer& quads, TextRenderer& text,
 		const Font& font, float mouseX, float mouseY) const {
 		const bool hovered = contains(mouseX, mouseY);
+		quads.draw(m_x + 8.0f, m_y - 8.0f, m_width, m_height,
+			0.0f, 0.0f, 0.0f, 0.28f);
+		quads.draw(m_x - 2.0f, m_y - 2.0f, m_width + 4.0f, m_height + 4.0f,
+			0.72f, 0.55f, 0.24f, hovered ? 0.95f : 0.62f);
 		if (hovered) {
 			quads.draw(m_x, m_y, m_width, m_height,
-				0.75f, 0.58f, 0.22f, 0.95f);
+				0.22f, 0.19f, 0.28f, 0.98f);
 		}
 		else {
 			quads.draw(m_x, m_y, m_width, m_height,
-				0.12f, 0.10f, 0.18f, 0.88f);
+				0.07f, 0.08f, 0.14f, 0.96f);
 		}
 
 		text.begin();
-		text.draw(font, m_label, m_x + 28.0f, m_y + 22.0f,
-			1.0f, 0.94f, 0.78f);
+		const float textWidth = font.textWidth(m_label);
+		const float textX = m_x + (m_width - textWidth) * 0.5f;
+		text.draw(font, m_label, textX, m_y + 24.0f,
+			hovered ? 1.0f : 0.88f,
+			hovered ? 0.88f : 0.86f,
+			hovered ? 0.45f : 0.78f);
 	}
 
 }

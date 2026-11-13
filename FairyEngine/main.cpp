@@ -9,7 +9,6 @@
 #include "config/GameConfig.h"
 #include "world/WorldManager.h"
 #include "world/Door.h"
-#include "game/ui/MainMenu.h"
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <cstdio>
@@ -37,11 +36,6 @@ int main(int argc, char* argv[])
 
         Window window(config::window.width, config::window.height,
             config::window.title);
-        fairy::game::ui::MainMenu mainMenu(
-            config::window.width,
-            config::window.height,
-            "assets/PoetryVelvetRegularDemo-pgzzv.ttf");
-        bool gameStarted = false;
 
         WorldManager world;
         world.registerLocation("intro", "assets/locations/intro.location");
@@ -135,29 +129,11 @@ int main(int argc, char* argv[])
             const float dt = now - lastTime;
             lastTime = now;
 
-            double mouseX = 0.0;
-            double mouseY = 0.0;
-            glfwGetCursorPos(window.handle(), &mouseX, &mouseY);
-            const float uiMouseX = static_cast<float>(mouseX);
-            const float uiMouseY = config::window.height
-                - static_cast<float>(mouseY);
-
             const Location& location = world.current();
             const bool clicked = glfwGetMouseButton(window.handle(),
                 GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 
-            if (!gameStarted) {
-                const auto action = mainMenu.update(
-                    uiMouseX, uiMouseY, clicked);
-                if (action == fairy::game::ui::MainMenuAction::StartGame) {
-                    gameStarted = true;
-                }
-                else if (action == fairy::game::ui::MainMenuAction::Exit) {
-                    glfwSetWindowShouldClose(window.handle(), GLFW_TRUE);
-                }
-            }
-
-            if (gameStarted && transitionState == TransitionState::None) {
+            if (transitionState == TransitionState::None) {
                 locationTimer += dt;
                 const bool left = glfwGetKey(window.handle(), GLFW_KEY_A) == GLFW_PRESS;
                 const bool right = glfwGetKey(window.handle(), GLFW_KEY_D) == GLFW_PRESS;
@@ -210,10 +186,6 @@ int main(int argc, char* argv[])
                 + config::postProcess.focusHeightOffset;
             postProcessor.render(sceneRenderer->colorTexture(), focusX, focusY,
                 fade);
-
-            if (!gameStarted) {
-                mainMenu.draw(uiMouseX, uiMouseY);
-            }
 
             window.swapBuffers();
             window.pollEvents();
