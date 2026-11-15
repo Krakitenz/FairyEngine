@@ -17,15 +17,16 @@ namespace fairy::world {
 	}
 
 	void WorldManager::load(const std::string& id) {
-		const auto it = m_paths.find(id);
+		const std::string requestedId = id;
+		const auto it = m_paths.find(requestedId);
 		if (it == m_paths.end()) {
-			throw std::runtime_error("Location is not registered: " + id);
+			throw std::runtime_error("Location is not registered: " + requestedId);
 		}
 
 		Location loaded = m_levelManager.load(it->second);
-		loaded.id = id;
+		loaded.id = requestedId;
 		m_current = std::move(loaded);
-		m_currentId = id;
+		m_currentId = requestedId;
 		m_hasCurrent = true;
 	}
 
