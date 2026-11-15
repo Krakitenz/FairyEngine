@@ -368,6 +368,29 @@ namespace {
 			"The WorldManager did not switch to the registered target location");
 	}
 
+	void testWorldManagerCanReloadCurrentLocationUsingItsId() {
+		TemporaryDirectory temporaryDirectory;
+		const auto locationPath = temporaryDirectory.write(
+			"current.location",
+			"id = current\n"
+			"background.texture = assets/1.png\n");
+
+		WorldManager world;
+		world.registerLocation("current", locationPath.string());
+
+		world.load("current");
+		world.load(world.current().id);
+
+		require(
+			world.currentId() == "current" &&
+			world.current().id == "current",
+			"Reloading the current location using its ID corrupted the ID");
+
+		require(
+			world.current().backgroundTexture == "assets/1.png",
+			"The location data was not preserved after reloading");
+	}
+
 	void testWorldManagerPreservesCurrentLocationAfterFailedLoad() {
 		TemporaryDirectory temporaryDirectory;
 		const auto validLocation = temporaryDirectory.write("valid.location",
@@ -600,6 +623,8 @@ int main() {
 		{ "location parser rejects invalid fog settings", testLocationParserRejectsInvalidFogSettings },
 		{ "location parser rejects invalid door dimensions", testLocationParserRejectsInvalidDoorDimensions },
 		{ "WorldManager switches between project locations", testWorldManagerSwitchesBetweenProjectLocations },
+		{ "WorldManager reloads the current location using its ID",
+		  testWorldManagerCanReloadCurrentLocationUsingItsId },
 		{ "WorldManager preserves the active scene after a failed load", testWorldManagerPreservesCurrentLocationAfterFailedLoad },
 		{ "WorldManager reports registered locations", testWorldManagerReportsRegisteredLocations },
 		{ "WorldManager requires a loaded current location", testWorldManagerRequiresALoadedLocation },
