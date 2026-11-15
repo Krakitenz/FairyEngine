@@ -10,6 +10,7 @@ namespace fairy::core {
 			const config::PostProcessSettings& settings);
 		~PostProcessor();
 
+		void resize(int width, int height);
 		void render(GLuint sceneTexture, float focusX, float focusY,
 			float fade = 0.0f);
 

@@ -24,6 +24,7 @@ x86/
 *.log
 *.exp
 *.lib
+!FairyEngine/external/glfw-3.5.1.bin.WIN64/lib-vc2026/glfw3.lib
 *.dll
 *.exe
 *.lastbuildstate

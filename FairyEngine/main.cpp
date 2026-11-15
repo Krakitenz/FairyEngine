@@ -1,199 +1,260 @@
-#include "core/Window.h"
-#include "core/Texture.h"
-#include "core/Player.h"
+#include "config/GameConfig.h"
 #include "core/Animation.h"
 #include "core/Camera.h"
 #include "core/Layer.h"
-#include "core/SceneRenderer.h"
 #include "core/PostProcessor.h"
-#include "config/GameConfig.h"
+#include "core/SceneRenderer.h"
+#include "core/Sprite.h"
+#include "core/Texture.h"
+#include "core/Window.h"
+#include "world/Location.h"
 #include "world/WorldManager.h"
-#include "world/Door.h"
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
-#include <cstdio>
+#include <algorithm>
+#include <chrono>
+#include <cstdlib>
+#include <filesystem>
+#include <iomanip>
+#include <iostream>
 #include <memory>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
-using namespace fairy::core;
-using namespace fairy::config;
-using namespace fairy::world;
-namespace config = fairy::config;
+namespace {
 
-std::string framePath(const char* prefix, int index, int digits, const char* ext) {
-    char buffer[256];
-    std::snprintf(buffer, sizeof(buffer), "assets/fog/%s_%0*d.%s",
-        prefix, digits, index, ext);
-    return std::string(buffer);
+	using fairy::core::Animation;
+	using fairy::core::Layer;
+	using fairy::core::PostProcessor;
+	using fairy::core::SceneRenderer;
+	using fairy::core::Sprite;
+	using fairy::core::Texture;
+	using fairy::core::Window;
+	using fairy::world::Location;
+	using fairy::world::WorldManager;
+
+	class SpriteGeometryCleanup {
+	public:
+		~SpriteGeometryCleanup() {
+			Sprite::release();
+		}
+	};
+
+	bool isProjectRoot(const std::filesystem::path& path) {
+		return std::filesystem::exists(path / "assets" / "shaders" / "scene.vert");
+	}
+
+	std::filesystem::path searchUpwards(const std::filesystem::path& start) {
+		std::filesystem::path candidate = start;
+		while (!candidate.empty()) {
+			if (isProjectRoot(candidate)) {
+				return candidate;
+			}
+			const std::filesystem::path projectDirectory = candidate / "FairyEngine";
+			if (isProjectRoot(projectDirectory)) {
+				return projectDirectory;
+			}
+
+			const std::filesystem::path parent = candidate.parent_path();
+			if (parent == candidate) {
+				break;
+			}
+			candidate = parent;
+		}
+		return {};
+	}
+
+	std::filesystem::path findProjectRoot(const char* executablePath) {
+		std::filesystem::path root = searchUpwards(std::filesystem::current_path());
+		if (!root.empty()) {
+			return root;
+		}
+
+		if (executablePath && *executablePath) {
+			std::error_code error;
+			const std::filesystem::path absolutePath =
+				std::filesystem::absolute(executablePath, error);
+			if (!error) {
+				root = searchUpwards(absolutePath.parent_path());
+				if (!root.empty()) {
+					return root;
+				}
+			}
+		}
+
+		throw std::runtime_error("Could not find FairyEngine assets from the working or executable directory");
+	}
+
+	std::unique_ptr<Texture> loadTexture(const std::string& path, const char* role) {
+		try {
+			return std::make_unique<Texture>(path);
+		}
+		catch (const std::exception& error) {
+			std::cerr << "[Resource] Could not load " << role << " '" << path
+				<< "': " << error.what() << '\n';
+			return nullptr;
+		}
+	}
+
+	void fitLayerToViewport(Layer& layer, int width, int height) {
+		const Texture* texture = layer.sprite.texture();
+		const float scale = std::max(
+			static_cast<float>(width) / static_cast<float>(texture->width()),
+			static_cast<float>(height) / static_cast<float>(texture->height()));
+
+		layer.sprite.setPosition(width * 0.5f, height * 0.5f);
+		layer.sprite.setSize(texture->width() * scale, texture->height() * scale);
+	}
+
+	std::vector<std::string> makeFogFramePaths(const Location& location) {
+		std::vector<std::string> paths;
+		paths.reserve(static_cast<std::size_t>(location.fogFrameCount));
+
+		for (int frame = location.fogFirstFrame;
+			frame < location.fogFirstFrame + location.fogFrameCount; ++frame) {
+			std::ostringstream path;
+			path << "assets/fog/" << location.fogPrefix << '_'
+				<< std::setfill('0') << std::setw(location.fogDigits) << frame << ".png";
+			paths.push_back(path.str());
+		}
+
+		return paths;
+	}
+
+	Location loadInitialLocation(WorldManager& world) {
+		try {
+			world.load("intro");
+			return world.current();
+		}
+		catch (const std::exception& error) {
+			std::cerr << "[Resource] Could not load the intro scene: " << error.what()
+				<< ". Using the default fallback scene.\n";
+			return Location{};
+		}
+	}
+
+	void runGame() {
+		const fairy::config::WindowSettings& settings = fairy::config::window;
+		Window window(settings.width, settings.height, settings.title);
+		SpriteGeometryCleanup spriteGeometryCleanup;
+		const int initialWidth = std::max(window.width(), 1);
+		const int initialHeight = std::max(window.height(), 1);
+
+		WorldManager world;
+		world.registerLocation("intro", "assets/locations/intro.location");
+		world.registerLocation("test2", "assets/locations/test2.location");
+		const Location location = loadInitialLocation(world);
+
+		std::vector<std::unique_ptr<Texture>> textures;
+		std::vector<std::unique_ptr<Layer>> layerStorage;
+		std::vector<Layer*> layers;
+
+		auto appendLayer = [&](const std::string& path, float parallax,
+			float opacity, const char* role) {
+			std::unique_ptr<Texture> texture = loadTexture(path, role);
+			if (!texture) {
+				return false;
+			}
+
+			const Texture* texturePointer = texture.get();
+			const float textureWidth = static_cast<float>(texture->width());
+			const float textureHeight = static_cast<float>(texture->height());
+			textures.push_back(std::move(texture));
+
+			auto layer = std::make_unique<Layer>(texturePointer,
+				initialWidth * 0.5f, initialHeight * 0.5f,
+				textureWidth, textureHeight, parallax, opacity);
+			fitLayerToViewport(*layer, initialWidth, initialHeight);
+			layers.push_back(layer.get());
+			layerStorage.push_back(std::move(layer));
+			return true;
+		};
+
+		if (!appendLayer(location.backgroundTexture, location.backgroundParallax,
+			location.backgroundOpacity, "background")) {
+			if (location.backgroundTexture != "assets/room2.png") {
+				appendLayer("assets/room2.png", location.backgroundParallax,
+					location.backgroundOpacity, "fallback background");
+			}
+		}
+		if (!location.foregroundTexture.empty()) {
+			appendLayer(location.foregroundTexture, location.foregroundParallax,
+				location.foregroundOpacity, "foreground");
+		}
+		if (layers.empty()) {
+			std::cerr << "[Resource] No scene images could be loaded; showing the clear color.\n";
+		}
+
+		std::unique_ptr<Animation> fogAnimation;
+		if (location.fogFrameCount > 0) {
+			try {
+				fogAnimation = std::make_unique<Animation>(
+					makeFogFramePaths(location), location.fogFrameRate);
+			}
+			catch (const std::exception& error) {
+				std::cerr << "[Resource] Fog animation disabled: " << error.what() << '\n';
+			}
+		}
+
+		SceneRenderer sceneRenderer(initialWidth, initialHeight, layers,
+			fogAnimation.get(), location.fogOpacity);
+		PostProcessor postProcessor(initialWidth, initialHeight,
+			fairy::config::postProcess);
+		fairy::core::Camera camera(
+			static_cast<float>(initialWidth), static_cast<float>(initialHeight));
+		camera.setSmoothing(fairy::config::camera.smoothing);
+		camera.setWorldBounds(static_cast<float>(initialWidth),
+			static_cast<float>(initialHeight));
+
+		int viewportWidth = initialWidth;
+		int viewportHeight = initialHeight;
+		auto previousFrame = std::chrono::steady_clock::now();
+		while (!window.shouldClose()) {
+			const auto now = std::chrono::steady_clock::now();
+			const float dt = std::min(std::chrono::duration<float>(now - previousFrame).count(), 0.1f);
+			previousFrame = now;
+
+			window.pollEvents();
+			const int width = window.width();
+			const int height = window.height();
+			if (width <= 0 || height <= 0) {
+				continue;
+			}
+
+			if (width != viewportWidth || height != viewportHeight) {
+				sceneRenderer.resize(width, height);
+				postProcessor.resize(width, height);
+				camera.setViewportSize(static_cast<float>(width),
+					static_cast<float>(height));
+				camera.setWorldBounds(static_cast<float>(width),
+					static_cast<float>(height));
+				for (Layer* layer : layers) {
+					fitLayerToViewport(*layer, width, height);
+				}
+				viewportWidth = width;
+				viewportHeight = height;
+			}
+
+			if (fogAnimation) {
+				fogAnimation->update(dt);
+			}
+			sceneRenderer.render(camera);
+			postProcessor.render(sceneRenderer.colorTexture(),
+				width * 0.5f, height * 0.5f);
+			window.swapBuffers();
+		}
+	}
+
 }
 
-int main(int argc, char* argv[])
-{
-    try {
-        const bool transitionTest = argc > 1
-            && std::string(argv[1]) == "--test-transition";
-
-        Window window(config::window.width, config::window.height,
-            config::window.title);
-
-        WorldManager world;
-        world.registerLocation("intro", "assets/locations/intro.location");
-        world.registerLocation("test2", "assets/locations/test2.location");
-        world.load("intro");
-
-        Texture playerTexture("assets/dino_idle.png");
-        Player player(&playerTexture, 0.0f, 0.0f);
-
-        std::unique_ptr<Texture> roomTexture;
-        std::unique_ptr<Texture> foregroundTexture;
-        std::vector<std::unique_ptr<Texture>> fogTextures;
-        std::unique_ptr<Animation> fogAnimation;
-        std::unique_ptr<Layer> background;
-        std::unique_ptr<Layer> foreground;
-        std::vector<Layer*> layers;
-        std::unique_ptr<SceneRenderer> sceneRenderer;
-        std::unique_ptr<Door> door;
-        Camera camera(static_cast<float>(config::window.width),
-            static_cast<float>(config::window.height));
-
-        auto loadLocation = [&]() {
-            const Location& location = world.current();
-            roomTexture = std::make_unique<Texture>(location.backgroundTexture);
-            foregroundTexture.reset();
-
-            fogTextures.clear();
-            std::vector<const Texture*> fogFrames;
-            for (int i = location.fogFirstFrame;
-                i < location.fogFirstFrame + location.fogFrameCount; ++i) {
-                auto texture = std::make_unique<Texture>(framePath(
-                    location.fogPrefix.c_str(), i, location.fogDigits, "png"));
-                fogFrames.push_back(texture.get());
-                fogTextures.push_back(std::move(texture));
-            }
-            fogAnimation = std::make_unique<Animation>(fogFrames,
-                location.fogFrameRate);
-
-            const float worldWidth = static_cast<float>(roomTexture->width());
-            const float worldHeight = static_cast<float>(roomTexture->height());
-            player.setPosition(location.playerStartX, location.playerStartY);
-            camera.setWorldBounds(worldWidth, worldHeight);
-            camera.setPosition(location.playerStartX,
-                config::camera.targetHeight * config::window.height);
-
-            background = std::make_unique<Layer>(roomTexture.get(),
-                worldWidth * 0.5f, worldHeight * 0.5f,
-                worldWidth, worldHeight, location.backgroundParallax,
-                location.backgroundOpacity);
-
-            foreground.reset();
-            layers.clear();
-            layers.push_back(background.get());
-            if (!location.foregroundTexture.empty()) {
-                foregroundTexture = std::make_unique<Texture>(
-                    location.foregroundTexture);
-                foreground = std::make_unique<Layer>(foregroundTexture.get(),
-                    worldWidth * 0.5f, worldHeight * 0.5f,
-                    worldWidth, worldHeight, location.foregroundParallax,
-                    location.foregroundOpacity);
-                layers.push_back(foreground.get());
-            }
-
-            door = std::make_unique<Door>(
-                worldWidth - location.doorWidth * 0.5f,
-                location.playerStartY,
-                location.doorWidth,
-                location.doorHeight,
-                location.doorInteractionDistance,
-                location.nextLocation);
-            sceneRenderer = std::make_unique<SceneRenderer>(
-                config::window.width, config::window.height, layers,
-                *fogAnimation, location.fogOpacity);
-        };
-
-        loadLocation();
-        PostProcessor postProcessor(config::window.width, config::window.height,
-            config::postProcess);
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        enum class TransitionState { None, FadeOut, FadeIn };
-        TransitionState transitionState = TransitionState::None;
-        float transitionTimer = 0.0f;
-        float locationTimer = 0.0f;
-        std::string pendingLocation;
-        float lastTime = static_cast<float>(glfwGetTime());
-        while (!window.shouldClose()) {
-            const float now = static_cast<float>(glfwGetTime());
-            const float dt = now - lastTime;
-            lastTime = now;
-
-            const Location& location = world.current();
-            const bool clicked = glfwGetMouseButton(window.handle(),
-                GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-
-            if (transitionState == TransitionState::None) {
-                locationTimer += dt;
-                const bool left = glfwGetKey(window.handle(), GLFW_KEY_A) == GLFW_PRESS;
-                const bool right = glfwGetKey(window.handle(), GLFW_KEY_D) == GLFW_PRESS;
-                const bool jump = glfwGetKey(window.handle(), GLFW_KEY_SPACE) == GLFW_PRESS;
-                player.update(dt, left, right, jump);
-                camera.follow(player.x(),
-                    config::camera.targetHeight * config::window.height, dt);
-                door->update(dt);
-
-                const bool automaticTestTransition = transitionTest
-                    && locationTimer >= 10.0f;
-                if ((door->tryInteract(player.x(), player.y(), clicked)
-                    || automaticTestTransition)
-                    && world.has(location.nextLocation)) {
-                    pendingLocation = door->nextLocation();
-                    transitionState = TransitionState::FadeOut;
-                    transitionTimer = 0.0f;
-                }
-            }
-
-            float fade = 0.0f;
-            if (transitionState == TransitionState::FadeOut) {
-                transitionTimer += dt;
-                fade = transitionTimer / location.transitionDuration;
-                if (transitionTimer >= location.transitionDuration) {
-                    world.load(pendingLocation);
-                    loadLocation();
-                    locationTimer = 0.0f;
-                    transitionState = TransitionState::FadeIn;
-                    transitionTimer = world.current().transitionDuration;
-                    fade = 1.0f;
-                }
-            }
-            else if (transitionState == TransitionState::FadeIn) {
-                transitionTimer -= dt;
-                fade = transitionTimer / world.current().transitionDuration;
-                if (transitionTimer <= 0.0f) {
-                    transitionState = TransitionState::None;
-                    fade = 0.0f;
-                }
-            }
-
-            fogAnimation->update(dt);
-            sceneRenderer->render(camera);
-
-            const float focusX = player.x() - camera.x()
-                + config::window.width * 0.5f;
-            const float focusY = player.y() - camera.y()
-                + config::window.height * 0.5f
-                + config::postProcess.focusHeightOffset;
-            postProcessor.render(sceneRenderer->colorTexture(), focusX, focusY,
-                fade);
-
-            window.swapBuffers();
-            window.pollEvents();
-        }
-    }
-    catch (const std::exception& e) {
-        std::fprintf(stderr, "Fatal: %s\n", e.what());
-        return -1;
-    }
-    return 0;
+int main(int argc, char** argv) {
+	try {
+		std::filesystem::current_path(findProjectRoot(argc > 0 ? argv[0] : nullptr));
+		runGame();
+	}
+	catch (const std::exception& error) {
+		std::cerr << "[Fatal] " << error.what() << '\n';
+		return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
 }

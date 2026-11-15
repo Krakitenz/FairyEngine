@@ -8,7 +8,12 @@ namespace fairy::world {
 		if (id.empty()) {
 			throw std::invalid_argument("Location id cannot be empty");
 		}
-		m_paths[id] = path;
+		if (path.empty()) {
+			throw std::invalid_argument("Location path cannot be empty");
+		}
+		if (!m_paths.emplace(id, path).second) {
+			throw std::invalid_argument("Location is already registered: " + id);
+		}
 	}
 
 	void WorldManager::load(const std::string& id) {
@@ -26,7 +31,7 @@ namespace fairy::world {
 
 	const Location& WorldManager::current() const {
 		if (!m_hasCurrent) {
-			throw std::runtime_error("No location is loaded");
+			throw std::logic_error("No location is loaded");
 		}
 		return m_current;
 	}

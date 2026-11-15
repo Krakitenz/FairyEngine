@@ -1,27 +1,45 @@
 #include "world/LevelManager.h"
 #include <cctype>
+#include <cmath>
 #include <fstream>
+#include <limits>
 #include <stdexcept>
 
 namespace fairy::world {
 
 	namespace {
 		int toInt(const std::string& value, const std::string& key) {
+			std::size_t consumed = 0;
+			int result = 0;
 			try {
-				return std::stoi(value);
+				result = std::stoi(value, &consumed);
 			}
-			catch (...) {
-				throw std::runtime_error("Invalid integer for location key: " + key);
+			catch (const std::exception&) {
+				throw std::runtime_error("Invalid integer for location key '" + key
+					+ "': " + value);
 			}
+			if (consumed != value.size()) {
+				throw std::runtime_error("Invalid integer for location key '" + key
+					+ "': " + value);
+			}
+			return result;
 		}
 
 		float toFloat(const std::string& value, const std::string& key) {
+			std::size_t consumed = 0;
+			float result = 0.0f;
 			try {
-				return std::stof(value);
+				result = std::stof(value, &consumed);
 			}
-			catch (...) {
-				throw std::runtime_error("Invalid number for location key: " + key);
+			catch (const std::exception&) {
+				throw std::runtime_error("Invalid number for location key '" + key
+					+ "': " + value);
 			}
+			if (consumed != value.size() || !std::isfinite(result)) {
+				throw std::runtime_error("Invalid number for location key '" + key
+					+ "': " + value);
+			}
+			return result;
 		}
 	}
 
@@ -32,7 +50,6 @@ namespace fairy::world {
 		}
 
 		Location location;
-		location.id = path;
 
 		std::string line;
 		int lineNumber = 0;
@@ -45,13 +62,56 @@ namespace fairy::world {
 
 			const std::size_t separator = line.find('=');
 			if (separator == std::string::npos) {
-				throw std::runtime_error("Invalid location line "
-					+ std::to_string(lineNumber) + ": " + line);
+				throw std::runtime_error(path + ":" + std::to_string(lineNumber)
+					+ ": expected key=value, got '" + line + "'");
 			}
 
 			const std::string key = trim(line.substr(0, separator));
 			const std::string value = trim(line.substr(separator + 1));
-			apply(location, key, value);
+			try {
+				apply(location, key, value);
+			}
+			catch (const std::exception& error) {
+				throw std::runtime_error(path + ":" + std::to_string(lineNumber)
+					+ ": " + error.what());
+			}
+		}
+		if (file.bad()) {
+			throw std::runtime_error("Failed while reading location: " + path);
+		}
+
+		if (location.id.empty()) {
+			throw std::runtime_error(path + ": missing required key 'id'");
+		}
+		if (location.backgroundTexture.empty()) {
+			throw std::runtime_error(path + ": background.texture cannot be empty");
+		}
+		if (location.backgroundParallax < 0.0f || location.foregroundParallax < 0.0f) {
+			throw std::runtime_error(path + ": layer parallax cannot be negative");
+		}
+		if (location.backgroundOpacity < 0.0f || location.backgroundOpacity > 1.0f
+			|| location.foregroundOpacity < 0.0f || location.foregroundOpacity > 1.0f
+			|| location.fogOpacity < 0.0f || location.fogOpacity > 1.0f) {
+			throw std::runtime_error(path + ": layer and fog opacity must be between 0 and 1");
+		}
+		if (location.fogFirstFrame < 0 || location.fogFrameCount < 0
+			|| location.fogDigits <= 0 || location.fogDigits > 12
+			|| location.fogFrameRate < 0.0f
+			|| (location.fogFrameCount > 1 && location.fogFrameRate <= 0.0f)) {
+			throw std::runtime_error(path + ": invalid fog animation settings");
+		}
+		if (location.fogFrameCount > 0
+			&& location.fogFirstFrame > std::numeric_limits<int>::max()
+				- location.fogFrameCount + 1) {
+			throw std::runtime_error(path + ": fog frame range is too large");
+		}
+		if (location.transitionTrigger < 0.0f || location.transitionTrigger > 1.0f
+			|| location.transitionDuration < 0.0f) {
+			throw std::runtime_error(path + ": invalid transition settings");
+		}
+		if (location.doorWidth <= 0.0f || location.doorHeight <= 0.0f
+			|| location.doorInteractionDistance < 0.0f) {
+			throw std::runtime_error(path + ": invalid door settings");
 		}
 
 		return location;

@@ -12,6 +12,9 @@ namespace fairy::core {
 
         ~Shader();
 
+        Shader(const Shader&) = delete;
+        Shader& operator=(const Shader&) = delete;
+
         void bind() const;
         void unbind() const;
         void setVec2(const std::string& name, float x, float y);
@@ -26,6 +29,8 @@ namespace fairy::core {
 
         GLint uniformLocation(const std::string& name);
         static GLuint compile(GLenum type, const std::string& src);
+        static GLuint createProgram(const std::string& vertexSrc,
+            const std::string& fragmentSrc);
     };
 
 }

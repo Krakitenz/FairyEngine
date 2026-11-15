@@ -10,6 +10,7 @@ namespace fairy::core {
         Sprite(const Texture* texture, float x, float y, float w, float h);
 
         void draw(Shader& shader) const;
+        static void release();
 
         void setPosition(float x, float y) { m_x = x; m_y = y; }
         void setSize(float w, float h) { m_w = w; m_h = h; }
@@ -26,6 +27,7 @@ namespace fairy::core {
         float m_x, m_y, m_w, m_h;
 
         static GLuint s_vao;
+        static GLuint s_vbo;
         static void ensureQuad();
     };
 

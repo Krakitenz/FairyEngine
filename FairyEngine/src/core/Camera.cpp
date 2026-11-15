@@ -1,6 +1,7 @@
 #include "core/Camera.h"
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
 
 namespace fairy::core {
 
@@ -10,11 +11,29 @@ namespace fairy::core {
 		, m_viewportWidth(viewportWidth)
 		, m_viewportHeight(viewportHeight)
 	{
+		if (viewportWidth <= 0.0f || viewportHeight <= 0.0f) {
+			throw std::invalid_argument("Camera viewport dimensions must be positive");
+		}
 	}
 
 	void Camera::setWorldBounds(float worldWidth, float worldHeight) {
+		if (worldWidth <= 0.0f || worldHeight <= 0.0f) {
+			throw std::invalid_argument("Camera world dimensions must be positive");
+		}
+
 		m_worldWidth = worldWidth;
 		m_worldHeight = worldHeight;
+		m_x = clampX(m_x);
+		m_y = clampY(m_y);
+	}
+
+	void Camera::setViewportSize(float width, float height) {
+		if (width <= 0.0f || height <= 0.0f) {
+			throw std::invalid_argument("Camera viewport dimensions must be positive");
+		}
+
+		m_viewportWidth = width;
+		m_viewportHeight = height;
 		m_x = clampX(m_x);
 		m_y = clampY(m_y);
 	}

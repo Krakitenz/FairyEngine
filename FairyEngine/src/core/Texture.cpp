@@ -10,10 +10,18 @@ namespace fairy::core {
         stbi_set_flip_vertically_on_load(true);
 
         unsigned char* data = stbi_load(path.c_str(), &m_width, &m_height, nullptr, 4);
-        if (!data)
-            throw std::runtime_error("Cannot load texture: " + path);
+        if (!data) {
+            const char* reason = stbi_failure_reason();
+            throw std::runtime_error("Cannot load texture '" + path + "': "
+                + (reason ? reason : "unknown image error"));
+        }
 
         glGenTextures(1, &m_id);
+        if (!m_id) {
+            stbi_image_free(data);
+            throw std::runtime_error("OpenGL could not allocate texture: " + path);
+        }
+
         glBindTexture(GL_TEXTURE_2D, m_id);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -21,7 +29,7 @@ namespace fairy::core {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_width, m_height,
             0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glBindTexture(GL_TEXTURE_2D, 0);
 
