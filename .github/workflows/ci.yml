@@ -1,0 +1,40 @@
+
+name: FairyEngine CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.configuration }} x64
+    runs-on: windows-2025-vs2026
+
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v3
+        with:
+          msbuild-architecture: x64
+
+      - name: Build FairyEngine
+        shell: pwsh
+        run: |
+          msbuild "FairyEngine\FairyEngine.vcxproj" `
+            /m `
+            /t:Rebuild `
+            /p:Configuration=${{ matrix.configuration }} `
+            /p:Platform=x64 `
+            /verbosity:minimal
