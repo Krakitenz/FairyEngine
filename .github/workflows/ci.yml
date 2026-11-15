@@ -1,4 +1,3 @@
-
 name: FairyEngine CI
 
 on:
@@ -6,14 +5,16 @@ on:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build ${{ matrix.configuration }} x64
+  build-and-test:
+    name: ${{ matrix.configuration }} x64
     runs-on: windows-2025-vs2026
+    timeout-minutes: 20
 
     strategy:
       fail-fast: false
@@ -38,3 +39,22 @@ jobs:
             /p:Configuration=${{ matrix.configuration }} `
             /p:Platform=x64 `
             /verbosity:minimal
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build native tests
+        shell: pwsh
+        run: |
+          msbuild "FairyEngine\tests\FairyEngine.Tests.vcxproj" `
+            /m `
+            /t:Rebuild `
+            /p:Configuration=${{ matrix.configuration }} `
+            /p:Platform=x64 `
+            /verbosity:minimal
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run tests
+        shell: pwsh
+        working-directory: FairyEngine
+        run: |
+          & ".\tests\bin\x64\${{ matrix.configuration }}\FairyEngine.Tests.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
