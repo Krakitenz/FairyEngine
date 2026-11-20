@@ -7,6 +7,7 @@ namespace fairy::core {
 		Camera(float viewportWidth, float viewportHeight);
 
 		void setWorldBounds(float worldWidth, float worldHeight);
+		void setViewportSize(float width, float height);
 		void setSmoothing(float smoothing) { m_smoothing = smoothing; }
 		void setPosition(float x, float y);
 		void follow(float targetX, float targetY, float dt);

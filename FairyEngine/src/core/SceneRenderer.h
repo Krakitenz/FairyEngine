@@ -11,9 +11,10 @@ namespace fairy::core {
 	class SceneRenderer {
 	public:
 		SceneRenderer(int width, int height, const std::vector<Layer*>& layers,
-			Animation& fogAnimation, float fogOpacity);
+			Animation* fogAnimation, float fogOpacity);
 
 		void render(const Camera& camera);
+		void resize(int width, int height);
 
 		GLuint colorTexture() const { return m_fbo.colorTexture(); }
 
@@ -23,7 +24,7 @@ namespace fairy::core {
 		Shader m_shader;
 		Framebuffer m_fbo;
 		const std::vector<Layer*>& m_layers;
-		Animation& m_fogAnimation;
+		Animation* m_fogAnimation;
 		float m_fogOpacity;
 	};
 

@@ -23,9 +23,12 @@ namespace fairy::core {
         int height() const { return m_height; }
 
     private:
+        static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+
         GLFWwindow* m_handle = nullptr;
-        int m_width;
-        int m_height;
+        int m_width = 0;
+        int m_height = 0;
+        bool m_glfwInitialized = false;
     };
 
 } // namespace fairy::core

@@ -14,20 +14,16 @@ namespace fairy::core {
         return ss.str();
     }
 
-    Shader::Shader(const std::string& vertPath, const std::string& fragPath, bool /*fromFile*/) {
-        std::string vs = readFile(vertPath);
-        std::string fs = readFile(fragPath);
-        GLuint v = compile(GL_VERTEX_SHADER, vs);
-        GLuint f = compile(GL_FRAGMENT_SHADER, fs);
-        m_program = glCreateProgram();
-        glAttachShader(m_program, v);
-        glAttachShader(m_program, f);
-        glLinkProgram(m_program);
-        glDeleteShader(v);
-        glDeleteShader(f);
+    Shader::Shader(const std::string& vertPath, const std::string& fragPath, bool /*fromFile*/)
+        : Shader(readFile(vertPath), readFile(fragPath)) {
     }
+
     GLuint Shader::compile(GLenum type, const std::string& src) {
         GLuint shader = glCreateShader(type);
+        if (!shader) {
+            throw std::runtime_error("Could not create OpenGL shader");
+        }
+
         const char* c = src.c_str();
         glShaderSource(shader, 1, &c, nullptr);
         glCompileShader(shader);

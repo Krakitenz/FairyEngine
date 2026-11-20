@@ -19,10 +19,10 @@ namespace fairy::core {
         }
 
         void draw(Shader& shader, const Camera& camera) const {
-            const float screenX = sprite.x() - camera.x() * parallax
-                + camera.viewportWidth() * 0.5f;
-            const float screenY = sprite.y() - camera.y() * parallax
-                + camera.viewportHeight() * 0.5f;
+            const float screenX = camera.viewportWidth() * 0.5f
+                + (sprite.x() - camera.x()) * parallax;
+            const float screenY = camera.viewportHeight() * 0.5f
+                + (sprite.y() - camera.y()) * parallax;
 
             Sprite screenSprite(sprite.texture(), screenX, screenY,
                 sprite.width(), sprite.height());

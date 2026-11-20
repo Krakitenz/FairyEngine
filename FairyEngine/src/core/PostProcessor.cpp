@@ -1,4 +1,5 @@
 #include "core/PostProcessor.h"
+#include <stdexcept>
 
 namespace fairy::core {
 
@@ -35,6 +36,15 @@ namespace fairy::core {
 	PostProcessor::~PostProcessor() {
 		if (m_vbo) glDeleteBuffers(1, &m_vbo);
 		if (m_vao) glDeleteVertexArrays(1, &m_vao);
+	}
+
+	void PostProcessor::resize(int width, int height) {
+		if (width <= 0 || height <= 0) {
+			throw std::invalid_argument("Post-processing dimensions must be positive");
+		}
+
+		m_width = width;
+		m_height = height;
 	}
 
 	void PostProcessor::render(GLuint sceneTexture, float focusX, float focusY,

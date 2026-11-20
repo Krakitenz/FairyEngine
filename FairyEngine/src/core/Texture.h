@@ -9,6 +9,9 @@ namespace fairy::core {
         Texture(const std::string& path);
         ~Texture();
 
+        Texture(const Texture&) = delete;
+        Texture& operator=(const Texture&) = delete;
+
         void bind(GLuint slot = 0) const;
 
         int width()  const { return m_width; }

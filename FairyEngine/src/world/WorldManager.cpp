@@ -8,25 +8,31 @@ namespace fairy::world {
 		if (id.empty()) {
 			throw std::invalid_argument("Location id cannot be empty");
 		}
-		m_paths[id] = path;
+		if (path.empty()) {
+			throw std::invalid_argument("Location path cannot be empty");
+		}
+		if (!m_paths.emplace(id, path).second) {
+			throw std::invalid_argument("Location is already registered: " + id);
+		}
 	}
 
 	void WorldManager::load(const std::string& id) {
-		const auto it = m_paths.find(id);
+		const std::string requestedId = id;
+		const auto it = m_paths.find(requestedId);
 		if (it == m_paths.end()) {
-			throw std::runtime_error("Location is not registered: " + id);
+			throw std::runtime_error("Location is not registered: " + requestedId);
 		}
 
 		Location loaded = m_levelManager.load(it->second);
-		loaded.id = id;
+		loaded.id = requestedId;
 		m_current = std::move(loaded);
-		m_currentId = id;
+		m_currentId = requestedId;
 		m_hasCurrent = true;
 	}
 
 	const Location& WorldManager::current() const {
 		if (!m_hasCurrent) {
-			throw std::runtime_error("No location is loaded");
+			throw std::logic_error("No location is loaded");
 		}
 		return m_current;
 	}
